@@ -1,0 +1,4 @@
+build_parameters:
+  - "--prefix-length=30"
+  - "--error-overlinking"
+  - "--error-overdepending"

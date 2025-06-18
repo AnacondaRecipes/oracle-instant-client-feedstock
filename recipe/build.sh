@@ -1,5 +1,7 @@
 #!/bin/bash
 
+CROOT=/opt/conda
+
 set -ex
 
 # Create directory for configuration
@@ -12,11 +14,10 @@ SUBPATCH_VERSION=$(echo $PKG_VERSION | cut -d. -f4)
 
 OIC_FOLDER_NAME=instantclient_${MAJOR_VERSION}_${MINOR_VERSION}
 
-if [[ ${target_platform} == osx-* ]]; then
-    echo "building for osx"
-elif [[ ${target_platform} == linux-* ]]; then
+if [[ ${target_platform} == linux-* ]]; then
     cp -r ${OIC_FOLDER_NAME}/* $PREFIX/lib/
-#elif [[ ${target_platform} == linux-64 ]]; then
+fi
+#if [[ ${target_platform} == linux-64 ]]; then
 #    # Extract the .zip
 #    mkdir -p tmp_extract
 #    unzip instantclient-basic-linux.x64-$PKG_VERSION.zip -d tmp_extract/
@@ -30,7 +31,7 @@ elif [[ ${target_platform} == linux-* ]]; then
 #
 #    # Copy contents to target lib folder
 #    cp -r tmp_extract/${OIC_FOLDER_NAME}/* $PREFIX/lib/
-fi
+#fi
 
 if [[ ${target_platform} == linux-* ]]; then
     # Patch the RPATHs
