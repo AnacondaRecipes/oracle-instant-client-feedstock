@@ -5,3 +5,10 @@ build_parameters:
   - "--prefix-length=30"
   - "--error-overlinking"
   - "--error-overdepending"
+
+# Required for glibc >= 2.28
+pkg_build_image_tag: main-rockylinux-8
+build_env_vars:
+  ANACONDA_ROCKET_GLIBC: "2.28"
+channels:
+  - https://staging.continuum.io/prefect/fs/linux-sysroot-feedstock/pr3/be8f934
