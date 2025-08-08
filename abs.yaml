@@ -7,7 +7,7 @@ build_parameters:
   - "--error-overdepending"
 
 # Required for glibc >= 2.28
-#pkg_build_image_tag: main-rockylinux-8
+pkg_build_image_tag: main-rockylinux-8
 #channels:
 #  - https://staging.continuum.io/prefect/fs/linux-sysroot-feedstock/pr3/be8f934
 
