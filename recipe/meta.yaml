@@ -1,45 +1,116 @@
 package:
   name: oracle-instant-client
-  version: {{ '19.8.0.0.0' if osx else '23.7.0.25.01' }}
+  version: 23.8.0.25.04  # [not osx]
+  version: 23.3.0.23.09  # [osx and arm64]
+  version: 19.16.0.0.0  # [osx and x86_64]
 
 source:
-  path: .
+  url: https://download.oracle.com/otn_software/nt/instantclient/2380000/instantclient-basic-windows.x64-23.8.0.25.04.zip  # [win]
+  url: https://download.oracle.com/otn_software/linux/instantclient/2380000/instantclient-basic-linux.x64-23.8.0.25.04.zip  # [linux and x86_64]
+  url: https://download.oracle.com/otn_software/linux/instantclient/2380000/instantclient-basic-linux.arm64-23.8.0.25.04.zip  # [linux and aarch64]
+  url: https://download.oracle.com/otn_software/mac/instantclient/1916000/instantclient-basic-macos.x64-19.16.0.0.0dbru.dmg  # [osx and x86_64]
+  url: https://download.oracle.com/otn_software/mac/instantclient/233023/instantclient-basic-macos.arm64-23.3.0.23.09-2.dmg  # [osx and arm64]
+  #path: instantclient-basic-windows.x64-23.8.0.25.04.zip  # [win]
+  #path: instantclient-basic-linux.x64-23.8.0.25.04.zip  # [linux and x86_64]
+  #path: instantclient-basic-linux.arm64-23.8.0.25.04.zip  # [linux and aarch64]
+  #path: instantclient-basic-macos.x64-19.16.0.0.0dbru.dmg  # [osx and x86_64]
+  #path: instantclient-basic-macos.arm64-23.3.0.23.09-2.dmg  # [osx and arm64]
+  sha256: 717121897f0cbd10cc93f6d8e0a7f9b316ec5f8339288075630a75881ffdeefd  # [win]
+  sha256: b0f9b427e6571e85323234c17be9e5cff34cf31ae98b8f769f3d46a7bcfe2c0f  # [linux and x86_64]
+  sha256: a65c116b9f950f0f54b7ff7e32b6dfe48c83d5b75b312ae87b6786548b7cb0ab  # [linux and aarch64]
+  sha256: 725eeb7c00041e926b57c3db508ea7439a1935a37f480c0ac6d46eddc4205331  # [osx and x86_64]
+  sha256: ff6fcfb8e2a231a9e0eae858691fe854451b375e654adf4a62331981a60e9569  # [osx and arm64]
 
 build:
-  number: 6
-  skip: true  # [not unix]
+  binary_relocation: false
+  number: 0
+  skip: true  # [not linux]
+  runpath_whitelist:
+    - $ORIGIN/../lib
+  # Repacked binaries on linux aarch64 have flag DT_TLSDESC set (GNU_HASH), which is not supported by lief (tested with lief 0.16.4 and 0.16.6).
+  # This is a workaround to ignore the overlinking error.
+  overlinking_ignore_patterns: # [linux and aarch64]
+    - "lib/adrci"              # [linux and aarch64]
+    - "lib/fips.so"            # [linux and aarch64]
+    - "lib/genezi"             # [linux and aarch64]
+    - "lib/legacy.so"          # [linux and aarch64]
+    - "lib/libclntshcore.so.23.1" # [linux and aarch64]
+    - "lib/libclntsh.so.23.1"    # [linux and aarch64]
+    - "lib/libnnz.so"            # [linux and aarch64]
+    - "lib/libocci.so.23.1"      # [linux and aarch64]
+    - "lib/libociei.so"          # [linux and aarch64]
+    - "lib/libocijdbc23.so"     # [linux and aarch64]
+    - "lib/libtfojdbc1.so"      # [linux and aarch64]
+    - "lib/pkcs11.so"           # [linux and aarch64]
+    - "lib/uidrvci"             # [linux and aarch64]
+  missing_dso_whitelist:
+    - /lib64/libdl.so.2  # [linux]
+    - /lib64/libm.so.6  # [linux]
+    - /lib64/libpthread.so.0  # [linux]
+    - /lib64/librt.so.1  # [linux]
+    - /lib64/libresolv.so.2  # [linux]
+    - /lib64/libc.so.6  # [linux]
+    - /lib64/ld-linux-x86-64.so.2  # [linux]
+    - /lib64/libstdc++.so.6  # [linux]
+    - /lib64/libgcc_s.so.1  # [linux]
+
+    - $RPATH/libdl.so.2  # [linux]
+    - $RPATH/libm.so.6  # [linux]
+    - $RPATH/libpthread.so.0  # [linux]
+    - $RPATH/librt.so.1  # [linux]
+    - $RPATH/libresolv.so.2  # [linux]
+    - $RPATH/libc.so.6  # [linux]
+    - $RPATH/ld-linux-x86-64.so.2  # [linux]
+    - $RPATH/libstdc++.so.6  # [linux]
+    - $RPATH/libgcc_s.so.1  # [linux]
+
+    - $RPATH/libaio.so.1  # [linux]
 
 requirements:
+  build:
+    - unzip  # Only needed when using local files source, can be skipped for URL
+    - patchelf  # [linux]
   host:
+    - libaio {{ libaio }}  # [linux]
   run:
-    - curl
     - libaio  # [linux]
-    - unzip
     - __glibc >=2.28  # [linux]
-
+    - libgcc-ng >=11.2.0  # [linux]
+    - openjdk
 test:
+  files:
+    - tests/test.py
+    - tests/cdemo81
+  requires:
+    - python
+    - oracledb
+    - pytest
   commands:
-    - echo "It works!"
-    - test -f ${PREFIX}/oracle_instant_client/instantclient_*/CONDA_LINKS
+    # Test will fail due to long pathname in package build test environment with default path
+    # Use --prefix-length 30 to avoid the issue and pass successfully
+    - pytest -vv tests/test.py
 
 about:
   home: https://www.oracle.com/database/technologies/instant-client.html
-  license: BSD-3-Clause
-  license_file: LICENSE
+  license: LicenseRef-Oracle
+  license_family: Proprietary
+  license_file: BASIC_LICENSE
   summary: package to download and install oracle instant client
   description: |
-    This package downloads and installs the Oracle Instant Client. By default, it uses a standard location.
+    This package downloads and installs the Oracle Instant Client [Basic].
 
-    If you're behind a firewall and unable to download the instant client zip file from download.oracle.com,
-    you can set the environment variable `ORACLE_DOWNLOAD_BASE_URL` to specify where it should look for the
-    corresponding zip file. The zip file must have the same name as found on the oracle website: 
-    https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html.
-
-    ```bash
-    export RACLE_DOWNLOAD_BASE_URL=https://my.internal.website/oracle
-    conda install oracle-instant-client
-    ```  
+    Oracle Instant Client enables development and deployment of applications that connect to 
+    Oracle Database, either on-premise or in the Cloud. The Instant Client libraries provide the
+    necessary network connectivity and advanced data features to make full use of Oracle Database.
+    The libraries are used by the Oracle APIs of popular languages and environments including 
+    Python, Node.js, Go, PHP and Ruby, as well as providing access for Oracle Call Interface (OCI),
+    Oracle C++ Call Interface (OCCI), JDBC OCI, ODBC and Pro*C applications. 
+  doc_url: https://www.oracle.com/database/technologies/instant-client.html
+  dev_url: https://www.oracle.com/database/technologies/instant-client.html
 
 extra:
+  skip-lints:
+    - incorrect_license
+
   recipe-maintainers:
-    - beckermr
+    - TS-ANC

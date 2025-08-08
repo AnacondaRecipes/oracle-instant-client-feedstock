@@ -6,6 +6,8 @@
 # Ignore all files and folders in root
 *
 !/conda-forge.yml
+!/abs.yaml
+!/conda_build_config.yaml
 
 # Don't ignore any files/folders if the parent folder is 'un-ignored'
 # This also avoids warnings when adding an already-checked file with an ignored parent.

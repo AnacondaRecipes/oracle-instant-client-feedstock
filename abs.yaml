@@ -1,0 +1,13 @@
+upload_channels:
+  - sfe1ed40
+
+build_parameters:
+  - "--prefix-length=120"
+  - "--error-overlinking"
+  - "--error-overdepending"
+
+# Required for glibc >= 2.28
+pkg_build_image_tag: main-rockylinux-8
+
+build_env_vars:
+  ANACONDA_ROCKET_GLIBC: "2.28"
